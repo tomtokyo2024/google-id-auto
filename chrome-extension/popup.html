@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GoogleID Auto</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      width: 340px;
+      padding: 16px;
+      background: #f9fafb;
+      color: #111827;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1d4ed8;
+    }
+
+    #settingsToggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: #6b7280;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    #settingsToggle:hover { background: #e5e7eb; }
+
+    /* Settings panel */
+    #settingsPanel {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+
+    #settingsPanel label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #6b7280;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    #webAppUrl,
+    #secretKey {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-bottom: 2px;
+      color: #111827;
+    }
+
+    #saveUrlBtn,
+    #testConnBtn {
+      background: #6b7280;
+      color: #fff;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    #saveUrlBtn:hover,
+    #testConnBtn:hover { background: #4b5563; }
+
+    /* Queue list */
+    label.section {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #6b7280;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    #queueList {
+      list-style: none;
+      max-height: 160px;
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      background: #fff;
+      margin-bottom: 12px;
+    }
+    #queueList li {
+      padding: 6px 10px;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    #queueList li:last-child { border-bottom: none; }
+    #queueList .empty {
+      color: #9ca3af;
+      font-style: italic;
+      text-align: center;
+      padding: 18px 10px;
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    #phase1Btn {
+      flex: 1;
+      background: #3b82f6;
+      color: #fff;
+    }
+    #phase1Btn:hover:not(:disabled) { background: #2563eb; }
+
+    #phase2Btn {
+      flex: 1;
+      background: #f59e0b;
+      color: #fff;
+    }
+    #phase2Btn:hover:not(:disabled) { background: #d97706; }
+
+    button:disabled {
+      background: #9ca3af;
+      cursor: default;
+    }
+
+    /* Status */
+    #status {
+      font-size: 12px;
+      color: #6b7280;
+      min-height: 18px;
+      text-align: center;
+    }
+    #status.error   { color: #ef4444; }
+    #status.success { color: #10b981; }
+    #status.running { color: #3b82f6; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>GoogleID Auto</h1>
+    <button id="settingsToggle" title="設定">&#9881;</button>
+  </div>
+
+  <!-- Settings panel (hidden by default) -->
+  <div id="settingsPanel" style="display:none;">
+    <label>Apps Script Web App URL</label>
+    <input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/..." />
+    <label style="margin-top:8px;">SECRET KEY</label>
+    <input type="password" id="secretKey" placeholder="デプロイ時に設定した密钥" />
+    <div style="display:flex;gap:6px;margin-top:6px;">
+      <button id="saveUrlBtn">保存</button>
+      <button id="testConnBtn">接続テスト</button>
+    </div>
+  </div>
+
+  <!-- Queue display -->
+  <label class="section">処理キュー</label>
+  <ul id="queueList">
+    <li class="empty">—</li>
+  </ul>
+
+  <!-- Phase buttons -->
+  <div class="btn-row">
+    <button id="phase1Btn">阶段 1 — 只読 ①②③</button>
+    <button id="phase2Btn" disabled>阶段 2 — 関闭 ④</button>
+  </div>
+
+  <div id="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

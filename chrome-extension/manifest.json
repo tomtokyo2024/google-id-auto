@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "GoogleID Auto - Restaurant Compliance",
+  "version": "0.1.0",
+  "description": "Automates restaurant compliance checks across Google Action Center and TakeMe admin.",
+
+  "permissions": ["storage", "scripting", "activeTab", "tabs"],
+
+  "host_permissions": [
+    "https://actionscenter.google.com/*",
+    "https://admin.takeme.com/*"
+  ],
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "GoogleID Auto",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "icons": {
+    "16":  "icons/icon16.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://actionscenter.google.com/inventory/merchants/*"],
+      "js": ["lib/dom-utils.js", "content/google-action.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://admin.takeme.com/web/reservations/settings*"],
+      "js": [
+        "lib/dom-utils.js",
+        "content/takeme-search.js",
+        "content/takeme-products.js",
+        "content/takeme-config.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
