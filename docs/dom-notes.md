@@ -72,6 +72,14 @@
 
 ## 已知坑（实战记录）
 
+### 坑 2: Chrome 扩展刷新后必须刷新所有相关页面
+- 现象: 改了 content script 代码、点了 chrome://extensions 的刷新按钮后，
+  在已打开的页面里触发 sendMessage 会报 "Receiving end does not exist"
+- 原因: content script 是页面加载时注入的，刷新插件后已有页面里的
+  content script 仍是旧实例，新代码没生效
+- 正确做法: 改代码后既要刷新插件，也要刷新（或重开）所有目标页面
+- 发现时间: 2026-05-11 步骤②首次试跑
+
 ### 坑 1: 页面 Console 不能直接调 chrome.runtime
 - 现象: 在 Action Center / TakeMe 页面的 DevTools Console 里执行
   chrome.runtime.sendMessage(...) 会报 "Cannot read properties of undefined"
@@ -147,15 +155,21 @@
     // - 输入要触发 Angular 监听，单纯 .value = "xxx" 不够，必须 dispatch input/change 事件
     //   （这正是上次 setAngularValue 工具函数解决的问题，可复用）
 
-**复用候选确认**
+**复用确认（2026-05-11 实测）**
 
-    // lib/dom-utils.js 的 fillNgSelect：✅ 同组件，可复用
-    // lib/dom-utils.js 的 setAngularValue：✅ 同框架，可复用
-    // 这两个函数明天试跑时验证
+    // lib/dom-utils.js 的 setAngularValue：✅ 实测可用
+    //   - 调用后 input.value 正确填入
+    //   - 同时触发了 Angular，下拉自动打开 (aria-expanded=true)
+    //   - 用于 ngb-typeahead 的 input 字段
+    //
+    // lib/dom-utils.js 的 fillNgSelect：❓ 未直接调用
+    //   - 本步骤改为手动 setAngularValue + click 候选 button 方式
+    //   - fillNgSelect 暂时未验证，留待步骤③④需要时再说
 
-**已知坑**（跑起来踩到再回填）
+**已知坑（2026-05-11 实测无新坑）**
 
-    // 暂无，明天试跑时回填
+    // 实测一次跑通，未踩新坑
+    // 注意事项已全部固化在上文"易碎点/实战注意"段
 
 ---
 
