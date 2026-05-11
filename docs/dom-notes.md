@@ -44,23 +44,25 @@
 
 ✅ 已确认：使用详情页 URL，模板锁定如上。PM 决策见 screenshot-checklist.md。
 
-**关键元素 selector 候选**（待 DOM 验证后填）
+**关键元素 selector（2026-05-11 实测，跑通 google_id edf7ac3f-...）**
 
-    // 餐厅名称所在元素：待填
-    // 截图确认名称在 Merchants results 表格的 Merchant name 列，具体 selector 待验证
+    // 餐厅名所在元素（已实测）
+    selector: merchant-detail .gmat-headline-3
+    // 用 textContent + trim() 读出，返回 "横浜 鉄板焼＆ステーキ 祥鳳"
 
-    // 找不到结果的判断依据：待填
-    // 截图显示出现文本 "We couldn't find any data that matches your criteria."
+    // 找不到结果的判断依据（已实测）
+    // waitForElement('merchant-detail', 10000) 超时 → '谷歌后台未找到'
 
-**等待信号**（待验证）
+**等待信号**
 
-    // 待填——等待 Merchants results 区块出现，或表格首行/空状态文本出现
+    // 等 merchant-detail 元素出现（即 Angular 详情组件渲染完）
+    waitForElement('merchant-detail', 10000)
 
-**易碎点**（待观察）
+**易碎点（已实测确认稳定）**
 
-    // - Action Center 为 Google 产品，DOM 随时可能改版
-    // - 页面有 Production/Sandbox 切换，需确认始终在 Production
-    // - merchantId 为 UUID 含连字符，URL 拼接注意不要 encode 连字符
+    // - .gmat-headline-3 是 Google Material Theme 的 H3 样式 class，跨页面通用
+    // - merchant-detail 是业务语义自定义标签，比 _ngcontent 这种构建后缀稳定
+    // - 未依赖任何 _ngcontent-ng-xxxxx 随构建变化的属性
 
 **已知坑**（跑起来踩到再回填）
 
@@ -68,39 +70,92 @@
 
 ---
 
-## 步骤② — TakeMe 搜索店铺
+## 已知坑（实战记录）
+
+### 坑 1: 页面 Console 不能直接调 chrome.runtime
+- 现象: 在 Action Center / TakeMe 页面的 DevTools Console 里执行
+  chrome.runtime.sendMessage(...) 会报 "Cannot read properties of undefined"
+- 原因: 页面 Console 运行在网页的 JS 上下文，不是 content script 上下文，
+  chrome.* API 不可见
+- 正确做法: 从 Service Worker DevTools 用 chrome.tabs.sendMessage 转发，
+  示例代码见 docs/PROGRESS.md / 调试段
+- 发现时间: 2026-05-11 第 5 步试跑
+
+---
+
+## 步骤② — TakeMe 搜索店铺（DOM 已调研，业务逻辑待实现）
 
 **页面 URL**
 
     https://admin.takeme.com/web/reservations/settings
+    （URL 在选店前后不变，Angular SPA 内状态切换）
 
-**关键元素 selector 候选**（待 DOM 验证后填）
+**关键元素 selector（2026-05-11 实测）**
 
-    // 店舗設定搜索框：待填
-    // 上次 content.js 用的是 input.title-shop-select，本步需确认是否同一 selector
+    // 店舗設定搜索框（input）
+    selector: input.object-select-input.form-select
+    备选: input[placeholder^="店舗番号"]  // 未选中状态
+    备选: input[role="combobox"]          // 语义层
 
-    // 下拉候选列表容器：待填
-    // 上次用 ngb-typeahead-window button，需验证店铺搜索框是否同款组件
+    // 父容器（用于 fillNgSelect 工具函数）
+    selector: app-object-select
 
-    // 候选项文本格式（已从截图确认）：
-    // "SR10694 - 支店 京都祇園 ふぐ・うなぎ・かに料理"
-    // platform_id 提取：取 " - " 前的部分 → "SR10694"
+    // 下拉候选窗口
+    selector: ngb-typeahead-window#ngb-typeahead-0
+    备选: ngb-typeahead-window[role="listbox"]
 
-    // 当前已选店铺名读取（步骤③④安全校验用）：待填
+    // 下拉候选项（每个店一行）
+    selector: ngb-typeahead-window button
+    （上次 TMC 项目用过的 selector，结构相同，可复用）
 
-**等待信号**（待验证）
+    // 候选项文本格式（已确认，含全角字符警示）
+    // "SR10193 － 横浜 鉄板焼＆ステーキ 祥鳳"
+    // ⚠️ 分隔符是全角破折号 U+FF0D "－"，不是 ASCII 短横线 U+002D "-"
+    // ⚠️ 不能用 text.split(' - ') 拆，会拆不开
+    //
+    // platform_id 提取规则（推荐用正则，规避全角/半角问题）：
+    //   const m = text.match(/^(SR\d+)\b/);
+    //   const platform_id = m ? m[1] : null;
+    //
+    // 实测样例 platform_id 格式: SR10193, SR10694（SR + 数字）
 
-    // 待填——等待搜索框可交互（非 disabled）
-    // 待填——输入后等待下拉出现的信号；超时判定为"平台未找到"
+**等待信号**
 
-**易碎点**（待观察）
+    // 搜索框可交互
+    waitForElement('input.object-select-input', 10000)
 
-    // - 下拉组件如为 Angular ng-select，候选出现有延迟，需实测等待时间
-    // - 名称 normalize 规则（去空格、括号、标点后一致），normalize 函数待确定后填此处
+    // 下拉是否打开（最稳的信号）
+    document.querySelector('input.object-select-input').getAttribute('aria-expanded') === 'true'
+
+    // 下拉候选出现
+    waitForElement('ngb-typeahead-window button', 3000)
+
+**当前店铺名读取（步骤③④安全校验用，2026-05-11 实测）**
+
+    const currentLabel = document.querySelector('input.object-select-input').value;
+    // 实测返回: "SR10193 － 横浜 鉄板焼＆ステーキ 祥鳳"（含全角分隔符）
+    // 用上面同样的正则提取 platform_id 做一致性比对
+
+**易碎点 / 实战注意**
+
+    // - aria-expanded 是判断下拉打开/关闭最稳定的信号，优先用它而不是看 ngb-typeahead-window 出现
+    // - placeholder 在选中店铺后会动态变成"SR... - 店铺名"
+    //   ⚠️ 但 input.value 也同步带这个值（PM 2026-05-11 实测确认）
+    //   ✅ 当前店铺名读取直接用 .value，不用回退到 .placeholder
+    // - 组件就是 ngb-typeahead-window，上次项目 fillNgSelect 函数可复用
+    // - ngb-typeahead-0 中的数字"0"是该页第几个 typeahead，理论上稳定，但保险起见用属性选择器
+    // - 输入要触发 Angular 监听，单纯 .value = "xxx" 不够，必须 dispatch input/change 事件
+    //   （这正是上次 setAngularValue 工具函数解决的问题，可复用）
+
+**复用候选确认**
+
+    // lib/dom-utils.js 的 fillNgSelect：✅ 同组件，可复用
+    // lib/dom-utils.js 的 setAngularValue：✅ 同框架，可复用
+    // 这两个函数明天试跑时验证
 
 **已知坑**（跑起来踩到再回填）
 
-    // 暂无
+    // 暂无，明天试跑时回填
 
 ---
 

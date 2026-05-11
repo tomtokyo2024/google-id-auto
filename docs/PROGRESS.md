@@ -1,12 +1,16 @@
 # 项目进度快照
 
-## 截至 2026-05-09 的状态
+## 截至 2026-05-11 的状态
 - 脚手架阶段：✅ 完成
 - 连通性测试：✅ 通过
-- 业务逻辑：⏳ 待开始
+- 业务逻辑：
+  - 步骤① ✅ 完成（2026-05-11，实测 1 条 google_id 通过）
+  - 步骤② 🔍 DOM 调研完成，selector 已锁定，业务逻辑待写
+  - 步骤③ ⏳ 待开始
+  - 步骤④ ⏳ 待开始
 
 ## 已完成的关键文档
-- docs/spec.md（v3.1 锁定）
+- docs/spec.md（v3.2 锁定）
 - docs/dom-notes.md（含开发约束）
 - docs/reuse-analysis.md
 - docs/screenshot-checklist.md（截图齐了）
